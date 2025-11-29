@@ -1,224 +1,925 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Internshala Demo Website</title>
-
-    <style>
-        body {
-            font-family: Arial, sans-serif;
-            background: #eef2f5;
-            margin: 0;
-            padding: 0;
-        }
-
-        nav {
-            background: #3949ab;
-            padding: 15px;
-            text-align: center;
-            display: flex;
-            justify-content: space-around;
-        }
-
-        nav a {
-            color: white;
-            text-decoration: none;
-            font-size: 18px;
-            cursor: pointer;
-        }
-
-        nav a.activeTab {
-            text-decoration: underline;
-            font-weight: bold;
-        }
-
-        .container {
-            width: 90%;
-            max-width: 450px;
-            margin: 40px auto;
-            background: white;
-            padding: 25px;
-            border-radius: 10px;
-            box-shadow: 0 0 10px rgba(0,0,0,0.1);
-        }
-
-        input {
-            width: 100%;
-            padding: 10px;
-            margin: 12px 0;
-            border: 1px solid #aaa;
-            border-radius: 6px;
-        }
-
-        button {
-            padding: 10px 20px;
-            background: #3949ab;
-            border: none;
-            color: white;
-            border-radius: 6px;
-            font-size: 16px;
-            cursor: pointer;
-        }
-
-        .section {
-            display: none;
-        }
-
-        .active {
-            display: block;
-        }
-
-        .error {
-            color: red;
-            font-size: 14px;
-        }
-
+ <head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Internshala Student Portal</title>
+  <script src="/_sdk/data_sdk.js"></script>
+  <script src="/_sdk/element_sdk.js"></script>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+      body {
+        box-sizing: border-box;
+      }
     </style>
+  <style>
+      html, body {
+        height: 100%;
+        width: 100%;
+      }
+      body {
+        font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+        margin: 0;
+        padding: 0;
+        background: linear-gradient(135deg, #0f172a, #1d4ed8);
+        color: #0f172a;
+      }
 
-    <script>
-        // ---------------- SHOW SECTIONS ----------------
-        function showSection(id) {
-            // Remove activeTab from nav links
-            document.querySelectorAll("nav a").forEach(a => a.classList.remove("activeTab"));
-            event.target.classList.add("activeTab");
+      .section {
+        display: none;
+        opacity: 0;
+        transition: opacity 0.25s ease;
+      }
+      .section.active {
+        display: block;
+        opacity: 1;
+      }
 
-            // Hide all sections
-            document.querySelectorAll(".section").forEach(div => div.classList.remove("active"));
+      .error {
+        color: #dc2626;
+        font-size: 0.85rem;
+        margin-top: 0.15rem;
+      }
 
-            // Show selected section
-            document.getElementById(id).classList.add("active");
+      .nav-link-active {
+        border-bottom-width: 2px;
+        border-color: #e5e7eb;
+        color: #f9fafb;
+        font-weight: 600;
+      }
+
+      .nav-link {
+        color: #e5e7eb;
+      }
+
+      .star {
+        cursor: pointer;
+        font-size: 1.5rem;
+        color: #cbd5e1;
+        transition: color 0.2s;
+      }
+
+      .star.filled {
+        color: #fbbf24;
+      }
+
+      .star:hover {
+        color: #fcd34d;
+      }
+
+      .internship-card {
+        transition: transform 0.2s, box-shadow 0.2s;
+      }
+
+      .internship-card:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 10px 25px rgba(0,0,0,0.15);
+      }
+
+      .badge {
+        display: inline-block;
+        padding: 0.25rem 0.75rem;
+        border-radius: 9999px;
+        font-size: 0.75rem;
+        font-weight: 600;
+      }
+
+      .loading-spinner {
+        border: 3px solid #e5e7eb;
+        border-top: 3px solid #4f46e5;
+        border-radius: 50%;
+        width: 24px;
+        height: 24px;
+        animation: spin 0.8s linear infinite;
+      }
+
+      @keyframes spin {
+        0% { transform: rotate(0deg); }
+        100% { transform: rotate(360deg); }
+      }
+    </style>
+  <style>@view-transition { navigation: auto; }</style>
+ </head>
+ <body class="w-full h-full">
+  <header class="w-full">
+   <nav class="w-full bg-indigo-700/90 backdrop-blur text-white shadow-md">
+    <div class="max-w-6xl mx-auto flex items-center justify-between px-4 py-3">
+     <div class="flex items-center gap-2">
+      <div class="w-8 h-8 rounded-full bg-indigo-400 flex items-center justify-center text-xs font-bold">
+       IS
+      </div>
+      <div>
+       <h1 id="portalTitle" class="text-lg font-semibold leading-none">Internshala Student Portal</h1>
+       <p id="welcomeMsg" class="text-xs text-indigo-100 mt-1">Find your perfect internship opportunity</p>
+      </div>
+     </div>
+     <div class="flex gap-4 text-sm font-medium">
+      <button id="tab-home" class="nav-link nav-link-active border-b-2 border-transparent pb-1" onclick="showSection(event, 'homeSection')"> Home </button>
+      <button id="tab-internships" class="nav-link border-b-2 border-transparent pb-1" onclick="showSection(event, 'internshipsSection')" style="display:none;"> Internships </button>
+      <button id="tab-applications" class="nav-link border-b-2 border-transparent pb-1" onclick="showSection(event, 'applicationsSection')" style="display:none;"> My Applications </button>
+     </div>
+    </div>
+   </nav>
+  </header>
+  <main class="w-full" style="min-height: calc(100% - 120px);">
+   <div class="max-w-6xl mx-auto px-4 py-8">
+    <!-- Home/Registration Section -->
+    <section id="homeSection" class="section active">
+     <div class="bg-slate-50/95 backdrop-blur rounded-2xl shadow-xl border border-slate-200 px-6 py-8 md:px-10 md:py-10 max-w-2xl mx-auto">
+      <h2 class="text-2xl md:text-3xl font-semibold text-slate-900 mb-2">Welcome to <span class="text-indigo-600">Internshala</span></h2>
+      <p class="text-slate-700 text-sm md:text-base mb-6">Register to explore internship opportunities tailored to your department and college.</p>
+      <form id="registrationForm" onsubmit="event.preventDefault(); handleRegistration();" class="flex flex-col gap-4">
+       <div>
+        <label for="studentName" class="block text-sm font-medium text-slate-700">Full Name</label>
+        <input id="studentName" type="text" class="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-white" placeholder="Enter your full name" required>
+        <span id="nameError" class="error"></span>
+       </div>
+
+       <div>
+        <label for="studentEmail" class="block text-sm font-medium text-slate-700">Email Address</label>
+        <input id="studentEmail" type="email" class="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-white" placeholder="name@example.com" required>
+        <span id="emailError" class="error"></span>
+       </div>
+
+       <!-- PASSWORD FIELD -->
+       <div>
+        <label for="studentPassword" class="block text-sm font-medium text-slate-700">
+          Password
+          <span class="text-slate-500 text-xs">(6–16 chars, 1 capital, 1 special)</span>
+        </label>
+        <input
+          id="studentPassword"
+          type="password"
+          class="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-white"
+          placeholder="Create a strong password"
+          required
+        >
+        <span id="passwordError" class="error"></span>
+       </div>
+
+       <div>
+        <label for="studentMobile" class="block text-sm font-medium text-slate-700">Mobile Number</label>
+        <input id="studentMobile" type="tel" class="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-white" placeholder="10-digit mobile number" required>
+        <span id="mobileError" class="error"></span>
+       </div>
+
+       <div>
+        <label for="studentCollege" class="block text-sm font-medium text-slate-700">Select College</label>
+        <select id="studentCollege" class="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-white" required>
+         <option value="">Choose your college</option>
+         <option value="Vignan">Vignan University</option>
+         <option value="KLU">KL University</option>
+         <option value="VVIT">Vasireddy Venkatadri Institute of Technology</option>
+         <option value="SRM">SRM University</option>
+         <option value="GITAM">GITAM University</option>
+        </select>
+       </div>
+
+       <div>
+        <label for="studentDepartment" class="block text-sm font-medium text-slate-700">Select Department</label>
+        <select id="studentDepartment" class="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-white" required>
+         <option value="">Choose your department</option>
+         <option value="CSE">Computer Science &amp; Engineering</option>
+         <option value="ECE">Electronics &amp; Communication Engineering</option>
+         <option value="EEE">Electrical &amp; Electronics Engineering</option>
+         <option value="MECH">Mechanical Engineering</option>
+         <option value="CIVIL">Civil Engineering</option>
+         <option value="BIO-ENG">Bio Engineering</option>
+         <option value="BIO-IT">Bio Informatics &amp; IT</option>
+         <option value="POLYTECHNIC">Polytechnic</option>
+        </select>
+       </div>
+
+       <p id="registerMessage" class="text-sm font-medium"></p>
+       <button type="submit" id="registerBtn" class="mt-2 inline-flex items-center justify-center rounded-lg bg-indigo-600 px-4 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-indigo-700 transition">
+        Register &amp; Continue
+       </button>
+      </form>
+     </div>
+    </section>
+
+    <!-- Internships Section -->
+    <section id="internshipsSection" class="section">
+     <div class="mb-6">
+      <h2 class="text-2xl font-bold text-white mb-2">Available Internships</h2>
+      <p class="text-indigo-100 text-sm">Showing opportunities for <span id="userDeptDisplay" class="font-semibold"></span></p>
+     </div>
+     <div id="internshipsList" class="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+      <!-- Internships will be rendered here -->
+     </div>
+    </section>
+
+    <!-- Applications Section -->
+    <section id="applicationsSection" class="section">
+     <div class="mb-6">
+      <h2 class="text-2xl font-bold text-white mb-2">My Applications</h2>
+      <p class="text-indigo-100 text-sm">Track your internship applications and reviews</p>
+     </div>
+     <div id="applicationsList" class="flex flex-col gap-4">
+      <!-- Applications will be rendered here -->
+     </div>
+    </section>
+   </div>
+  </main>
+
+  <!-- Application Modal -->
+  <div id="applicationModal" class="fixed inset-0 bg-black/50 backdrop-blur-sm hidden items-center justify-center z-50 p-4" onclick="if(event.target === this) closeApplicationModal()">
+   <div class="bg-white rounded-2xl shadow-2xl max-w-md w-full p-6" onclick="event.stopPropagation()">
+    <h3 class="text-xl font-bold text-slate-900 mb-4">Apply for Internship</h3>
+    <div id="modalInternshipDetails" class="mb-4 p-4 bg-indigo-50 rounded-lg">
+     <!-- Details will be filled dynamically -->
+    </div>
+    <p class="text-sm text-slate-600 mb-4">Confirm your application with the details below:</p>
+    <div id="modalStudentDetails" class="text-sm text-slate-700 space-y-1 mb-6">
+     <!-- Student details will be filled -->
+    </div>
+    <div class="flex gap-3">
+     <button onclick="closeApplicationModal()" class="flex-1 px-4 py-2 border border-slate-300 rounded-lg text-slate-700 hover:bg-slate-50 transition"> Cancel </button>
+     <button id="confirmApplyBtn" onclick="confirmApplication()" class="flex-1 px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition"> Confirm Apply </button>
+    </div>
+   </div>
+  </div>
+
+  <!-- Review Modal -->
+  <div id="reviewModal" class="fixed inset-0 bg-black/50 backdrop-blur-sm hidden items-center justify-center z-50 p-4" onclick="if(event.target === this) closeReviewModal()">
+   <div class="bg-white rounded-2xl shadow-2xl max-w-md w-full p-6" onclick="event.stopPropagation()">
+    <h3 class="text-xl font-bold text-slate-900 mb-4" id="reviewModalTitle">Rate Your Experience</h3>
+    <div id="reviewInternshipName" class="mb-4 text-sm font-semibold text-indigo-600">
+     <!-- Internship name -->
+    </div>
+    <div class="mb-4">
+     <label class="block text-sm font-medium text-slate-700 mb-2">Your Rating</label>
+     <div class="flex gap-1" id="starRating">
+      <span class="star" data-rating="1" onclick="setRating(1)">★</span>
+      <span class="star" data-rating="2" onclick="setRating(2)">★</span>
+      <span class="star" data-rating="3" onclick="setRating(3)">★</span>
+      <span class="star" data-rating="4" onclick="setRating(4)">★</span>
+      <span class="star" data-rating="5" onclick="setRating(5)">★</span>
+     </div>
+    </div>
+    <div class="mb-4">
+     <label for="reviewText" class="block text-sm font-medium text-slate-700 mb-2">
+      Your Review <span class="text-slate-500">(min 20 characters)</span>
+     </label>
+     <textarea id="reviewText" rows="4" maxlength="500" class="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-white" placeholder="Share your experience with this internship..."></textarea>
+     <div class="flex justify-between text-xs text-slate-500 mt-1">
+      <span id="reviewCharCount">0/20 characters</span>
+      <span id="reviewMaxCount">Max 500</span>
+     </div>
+     <span id="reviewError" class="error"></span>
+    </div>
+    <div class="flex gap-3">
+     <button onclick="closeReviewModal()" class="flex-1 px-4 py-2 border border-slate-300 rounded-lg text-slate-700 hover:bg-slate-50 transition"> Cancel </button>
+     <button id="submitReviewBtn" onclick="submitReview()" class="flex-1 px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition"> Submit Review </button>
+    </div>
+   </div>
+  </div>
+
+  <footer class="w-full border-t border-slate-800/40 bg-slate-900/80 text-slate-200">
+   <div class="max-w-6xl mx-auto px-4 py-4 flex flex-col md:flex-row items-center justify-between gap-2 text-xs">
+    <span>Internshala Student Portal · Find Your Dream Internship</span>
+    <span class="text-slate-400">Powered by Canva Code</span>
+   </div>
+  </footer>
+
+  <script>
+  // ============ GLOBAL STATE ============
+  let currentStudent = null;
+  let allRecords = [];
+  let currentApplicationId = null;
+  let currentReviewData = null;
+  let selectedRating = 0;
+
+  // ============ INTERNSHIP DATABASE (Reference Content) ============
+  const internshipDatabase = {
+    CSE: [
+      { id: 'cse-1', title: 'Full Stack Web Development', company: 'TechCorp Solutions', duration: '3 months', stipend: '₹15,000/month', location: 'Remote', skills: 'React, Node.js, MongoDB' },
+      { id: 'cse-2', title: 'Machine Learning Intern', company: 'AI Innovations', duration: '6 months', stipend: '₹20,000/month', location: 'Bangalore', skills: 'Python, TensorFlow, Data Analysis' },
+      { id: 'cse-3', title: 'Mobile App Development', company: 'AppWorks', duration: '4 months', stipend: '₹12,000/month', location: 'Hyderabad', skills: 'Flutter, Firebase, REST APIs' },
+      { id: 'cse-4', title: 'Cloud Computing Intern', company: 'CloudTech', duration: '3 months', stipend: '₹18,000/month', location: 'Pune', skills: 'AWS, Docker, Kubernetes' }
+    ],
+    ECE: [
+      { id: 'ece-1', title: 'Embedded Systems Development', company: 'ElectroTech', duration: '4 months', stipend: '₹14,000/month', location: 'Chennai', skills: 'C, Arduino, PCB Design' },
+      { id: 'ece-2', title: 'VLSI Design Intern', company: 'ChipDesign Inc', duration: '6 months', stipend: '₹16,000/month', location: 'Bangalore', skills: 'Verilog, VHDL, Cadence' },
+      { id: 'ece-3', title: 'IoT Solutions Developer', company: 'SmartDevices', duration: '3 months', stipend: '₹13,000/month', location: 'Remote', skills: 'Raspberry Pi, MQTT, Sensors' }
+    ],
+    EEE: [
+      { id: 'eee-1', title: 'Power Systems Analysis', company: 'PowerGrid Corp', duration: '5 months', stipend: '₹15,000/month', location: 'Delhi', skills: 'MATLAB, Power Systems, AutoCAD' },
+      { id: 'eee-2', title: 'Renewable Energy Intern', company: 'GreenEnergy Solutions', duration: '4 months', stipend: '₹12,000/month', location: 'Mumbai', skills: 'Solar PV, Wind Energy, SCADA' },
+      { id: 'eee-3', title: 'Electrical Design Engineer', company: 'IndustrialTech', duration: '6 months', stipend: '₹17,000/month', location: 'Pune', skills: 'AutoCAD, PLC, Control Systems' }
+    ],
+    MECH: [
+      { id: 'mech-1', title: 'CAD Design Intern', company: 'MechDesign Pro', duration: '3 months', stipend: '₹11,000/month', location: 'Coimbatore', skills: 'SolidWorks, AutoCAD, CATIA' },
+      { id: 'mech-2', title: 'Manufacturing Process Intern', company: 'AutoParts Ltd', duration: '4 months', stipend: '₹13,000/month', location: 'Chennai', skills: 'CNC, Lean Manufacturing, Quality Control' },
+      { id: 'mech-3', title: 'Robotics & Automation', company: 'RoboTech Industries', duration: '5 months', stipend: '₹16,000/month', location: 'Bangalore', skills: 'ROS, Python, Mechanical Design' }
+    ],
+    CIVIL: [
+      { id: 'civil-1', title: 'Structural Design Intern', company: 'BuildRight Constructions', duration: '4 months', stipend: '₹10,000/month', location: 'Hyderabad', skills: 'AutoCAD, STAAD Pro, Revit' },
+      { id: 'civil-2', title: 'Site Engineer Trainee', company: 'MegaProjects Ltd', duration: '6 months', stipend: '₹14,000/month', location: 'Mumbai', skills: 'Site Management, Surveying, MS Project' }
+    ],
+    'BIO-ENG': [
+      { id: 'bioeng-1', title: 'Biomedical Device Testing', company: 'MedTech Innovations', duration: '4 months', stipend: '₹13,000/month', location: 'Bangalore', skills: 'Medical Devices, Testing Protocols, Quality Assurance' },
+      { id: 'bioeng-2', title: 'Tissue Engineering Research', company: 'BioLab Research', duration: '6 months', stipend: '₹15,000/month', location: 'Hyderabad', skills: 'Cell Culture, Microscopy, Lab Techniques' }
+    ],
+    'BIO-IT': [
+      { id: 'bioit-1', title: 'Bioinformatics Analyst', company: 'GenomeData Corp', duration: '5 months', stipend: '₹17,000/month', location: 'Pune', skills: 'Python, R, Genomic Analysis' },
+      { id: 'bioit-2', title: 'Healthcare Data Science', company: 'HealthTech Analytics', duration: '4 months', stipend: '₹16,000/month', location: 'Remote', skills: 'SQL, Machine Learning, Healthcare Domain' }
+    ],
+    POLYTECHNIC: [
+      { id: 'poly-1', title: 'Technical Support Intern', company: 'TechSupport Services', duration: '3 months', stipend: '₹8,000/month', location: 'Various Locations', skills: 'Hardware, Troubleshooting, Customer Service' },
+      { id: 'poly-2', title: 'Workshop Assistant', company: 'Industrial Training Center', duration: '4 months', stipend: '₹9,000/month', location: 'Chennai', skills: 'Machinery, Safety Protocols, Maintenance' }
+    ]
+  };
+
+  // ============ DEFAULT CONFIG ============
+  const defaultConfig = {
+    portal_title: 'Internshala Student Portal',
+    welcome_message: 'Find your perfect internship opportunity'
+  };
+
+  // ============ DATA SDK HANDLER ============
+  const dataHandler = {
+    onDataChanged(data) {
+      allRecords = data;
+      if (currentStudent) {
+        renderApplications();
+      }
+    }
+  };
+
+  // ============ ELEMENT SDK CONFIG ============
+  async function onConfigChange(config) {
+    const titleEl = document.getElementById('portalTitle');
+    const welcomeEl = document.getElementById('welcomeMsg');
+    
+    if (titleEl) titleEl.textContent = config.portal_title || defaultConfig.portal_title;
+    if (welcomeEl) welcomeEl.textContent = config.welcome_message || defaultConfig.welcome_message;
+  }
+
+  function mapToCapabilities(config) {
+    return {
+      recolorables: [],
+      borderables: [],
+      fontEditable: undefined,
+      fontSizeable: undefined
+    };
+  }
+
+  function mapToEditPanelValues(config) {
+    return new Map([
+      ['portal_title', config.portal_title || defaultConfig.portal_title],
+      ['welcome_message', config.welcome_message || defaultConfig.welcome_message]
+    ]);
+  }
+
+  // ============ INITIALIZATION ============
+  async function initializeApp() {
+    if (window.dataSdk) {
+      const initResult = await window.dataSdk.init(dataHandler);
+      if (!initResult.isOk) {
+        console.error('Failed to initialize Data SDK');
+      }
+    }
+
+    if (window.elementSdk) {
+      await window.elementSdk.init({
+        defaultConfig,
+        onConfigChange,
+        mapToCapabilities,
+        mapToEditPanelValues
+      });
+    }
+
+    // Character counter for review
+    const reviewTextarea = document.getElementById('reviewText');
+    if (reviewTextarea) {
+      reviewTextarea.addEventListener('input', updateCharCount);
+    }
+  }
+
+  initializeApp();
+
+  // ============ TAB NAVIGATION ============
+  function showSection(event, sectionId) {
+    document.querySelectorAll('header nav button').forEach(btn => {
+      btn.classList.remove('nav-link-active');
+    });
+    event.currentTarget.classList.add('nav-link-active');
+
+    document.querySelectorAll('.section').forEach(section => {
+      section.classList.remove('active');
+    });
+
+    const targetSection = document.getElementById(sectionId);
+    if (targetSection) {
+      targetSection.classList.add('active');
+    }
+
+    if (sectionId === 'applicationsSection') {
+      renderApplications();
+    }
+  }
+
+  // ============ REGISTRATION ============
+  async function handleRegistration() {
+    const nameEl = document.getElementById('studentName');
+    const emailEl = document.getElementById('studentEmail');
+    const passwordEl = document.getElementById('studentPassword');
+    const mobileEl = document.getElementById('studentMobile');
+    const collegeEl = document.getElementById('studentCollege');
+    const deptEl = document.getElementById('studentDepartment');
+    
+    const nameErrorEl = document.getElementById('nameError');
+    const emailErrorEl = document.getElementById('emailError');
+    const passwordErrorEl = document.getElementById('passwordError');
+    const mobileErrorEl = document.getElementById('mobileError');
+    const messageEl = document.getElementById('registerMessage');
+
+    nameErrorEl.textContent = '';
+    emailErrorEl.textContent = '';
+    passwordErrorEl.textContent = '';
+    mobileErrorEl.textContent = '';
+    messageEl.textContent = '';
+
+    let valid = true;
+
+    const name = nameEl.value.trim();
+    const email = emailEl.value.trim();
+    const password = passwordEl.value;
+    const mobile = mobileEl.value.trim();
+    const college = collegeEl.value;
+    const department = deptEl.value;
+
+    const nameRegex = /^[A-Za-z ]+$/;
+    if (!nameRegex.test(name)) {
+      nameErrorEl.textContent = 'Name should contain only alphabets and spaces.';
+      valid = false;
+    }
+
+    if (!email.includes('@') || !email.includes('.')) {
+      emailErrorEl.textContent = 'Enter a valid email address.';
+      valid = false;
+    }
+
+    // PASSWORD VALIDATION: 6–16, 1 uppercase, 1 special
+    const hasUppercase = /[A-Z]/.test(password);
+    const hasSpecial = /[^A-Za-z0-9]/.test(password);
+    if (password.length < 6 || password.length > 16 || !hasUppercase || !hasSpecial) {
+      passwordErrorEl.textContent =
+        'Password must be 6–16 characters long and include at least 1 capital letter and 1 special character.';
+      valid = false;
+    }
+
+    const mobileRegex = /^[0-9]{10}$/;
+    if (!mobileRegex.test(mobile)) {
+      mobileErrorEl.textContent = 'Mobile number must be exactly 10 digits.';
+      valid = false;
+    }
+
+    if (!college || !department) {
+      messageEl.textContent = 'Please select both college and department.';
+      messageEl.classList.add('text-red-600');
+      return;
+    }
+
+    if (valid) {
+      currentStudent = {
+        name,
+        email,
+        password,
+        mobile,
+        college,
+        department
+      };
+
+      messageEl.textContent = 'Registration successful! Loading internships...';
+      messageEl.classList.remove('text-red-600');
+      messageEl.classList.add('text-emerald-600');
+
+      setTimeout(() => {
+        document.getElementById('tab-internships').style.display = 'block';
+        document.getElementById('tab-applications').style.display = 'block';
+        
+        renderInternships();
+        
+        const internshipsTab = document.getElementById('tab-internships');
+        showSection({ currentTarget: internshipsTab }, 'internshipsSection');
+      }, 800);
+    } else {
+      messageEl.textContent = 'Please fix the errors above.';
+      messageEl.classList.add('text-red-600');
+    }
+  }
+
+  // ============ RENDER INTERNSHIPS ============
+  function renderInternships() {
+    const container = document.getElementById('internshipsList');
+    const deptDisplay = document.getElementById('userDeptDisplay');
+    
+    if (!currentStudent || !container) return;
+
+    const internships = internshipDatabase[currentStudent.department] || [];
+    deptDisplay.textContent = getDepartmentFullName(currentStudent.department);
+
+    if (internships.length === 0) {
+      container.innerHTML = '<p class="text-white text-center col-span-full">No internships available for your department yet.</p>';
+      return;
+    }
+
+    container.innerHTML = internships.map(internship => {
+      const hasApplied = allRecords.some(r => 
+        r.type === 'application' && 
+        r.internship_id === internship.id && 
+        r.email === currentStudent.email
+      );
+
+      return `
+        <div class="internship-card bg-white rounded-xl shadow-lg p-5 border border-slate-200">
+          <div class="flex items-start justify-between mb-3">
+            <div>
+              <h3 class="font-bold text-lg text-slate-900">${internship.title}</h3>
+              <p class="text-sm text-indigo-600 font-semibold">${internship.company}</p>
+            </div>
+            ${hasApplied ? '<span class="badge bg-emerald-100 text-emerald-700">Applied</span>' : ''}
+          </div>
+          
+          <div class="space-y-2 mb-4 text-sm text-slate-600">
+            <div class="flex items-center gap-2">
+              <span>⏱️</span>
+              <span>${internship.duration}</span>
+            </div>
+            <div class="flex items-center gap-2">
+              <span>💰</span>
+              <span class="font-semibold text-slate-900">${internship.stipend}</span>
+            </div>
+            <div class="flex items-center gap-2">
+              <span>📍</span>
+              <span>${internship.location}</span>
+            </div>
+          </div>
+
+          <div class="mb-4">
+            <p class="text-xs font-semibold text-slate-700 mb-1">Required Skills:</p>
+            <p class="text-xs text-slate-600">${internship.skills}</p>
+          </div>
+
+          <button 
+            onclick="openApplicationModal('${internship.id}')" 
+            ${hasApplied ? 'disabled' : ''}
+            class="w-full py-2 rounded-lg font-semibold text-sm transition ${
+              hasApplied 
+                ? 'bg-slate-200 text-slate-500 cursor-not-allowed' 
+                : 'bg-indigo-600 text-white hover:bg-indigo-700'
+            }">
+            ${hasApplied ? 'Already Applied' : 'Apply Now'}
+          </button>
+        </div>
+      `;
+    }).join('');
+  }
+
+  // ============ APPLICATION MODAL ============
+  function openApplicationModal(internshipId) {
+    const internship = findInternshipById(internshipId);
+    if (!internship || !currentStudent) return;
+
+    const modal = document.getElementById('applicationModal');
+    const detailsEl = document.getElementById('modalInternshipDetails');
+    const studentDetailsEl = document.getElementById('modalStudentDetails');
+
+    detailsEl.innerHTML = `
+      <h4 class="font-bold text-indigo-900 mb-1">${internship.title}</h4>
+      <p class="text-sm text-indigo-700">${internship.company}</p>
+      <p class="text-xs text-slate-600 mt-2">${internship.duration} • ${internship.stipend}</p>
+    `;
+
+    studentDetailsEl.innerHTML = `
+      <p><strong>Name:</strong> ${currentStudent.name}</p>
+      <p><strong>Email:</strong> ${currentStudent.email}</p>
+      <p><strong>Mobile:</strong> ${currentStudent.mobile}</p>
+      <p><strong>College:</strong> ${currentStudent.college}</p>
+      <p><strong>Department:</strong> ${getDepartmentFullName(currentStudent.department)}</p>
+    `;
+
+    currentApplicationId = internshipId;
+    modal.classList.remove('hidden');
+    modal.classList.add('flex');
+  }
+
+  function closeApplicationModal() {
+    const modal = document.getElementById('applicationModal');
+    modal.classList.add('hidden');
+    modal.classList.remove('flex');
+    currentApplicationId = null;
+  }
+
+  // ============ UPDATED confirmApplication (Faster UX) ============
+  async function confirmApplication() {
+    if (!currentApplicationId || !currentStudent) return;
+
+    const btn = document.getElementById('confirmApplyBtn');
+    btn.disabled = true;
+    btn.innerHTML = '<div class="loading-spinner mx-auto"></div>';
+
+    const applicationData = {
+      id: 'app-' + Date.now() + '-' + Math.random().toString(36).substr(2, 9),
+      type: 'application',
+      internship_id: currentApplicationId,
+      student_name: currentStudent.name,
+      college: currentStudent.college,
+      department: currentStudent.department,
+      email: currentStudent.email,
+      mobile: currentStudent.mobile,
+      status: 'Applied',
+      applied_date: new Date().toISOString()
+    };
+
+    // OPTIMISTIC UPDATE: update UI immediately
+    allRecords.push(applicationData);
+    closeApplicationModal();
+    renderInternships();
+
+    const applicationsTab = document.getElementById('tab-applications');
+    showSection({ currentTarget: applicationsTab }, 'applicationsSection');
+    renderApplications();
+
+    // Save to backend
+    if (window.dataSdk) {
+      const result = await window.dataSdk.create(applicationData);
+
+      if (!result.isOk) {
+        alert('Failed to submit application to server. Please try again.');
+        // rollback
+        allRecords = allRecords.filter(r => r.id !== applicationData.id);
+        renderInternships();
+        renderApplications();
+      }
+    }
+
+    // reset button (for next time modal opens)
+    btn.disabled = false;
+    btn.textContent = 'Confirm Apply';
+  }
+
+  // ============ RENDER APPLICATIONS ============
+  function renderApplications() {
+    const container = document.getElementById('applicationsList');
+    if (!container || !currentStudent) return;
+
+    const userApplications = allRecords.filter(r => 
+      r.type === 'application' && r.email === currentStudent.email
+    );
+
+    if (userApplications.length === 0) {
+      container.innerHTML = `
+        <div class="bg-white/90 rounded-xl p-8 text-center">
+          <p class="text-slate-600">You haven't applied to any internships yet.</p>
+          <button onclick="document.getElementById('tab-internships').click()" class="mt-4 px-6 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition">
+            Browse Internships
+          </button>
+        </div>
+      `;
+      return;
+    }
+
+    container.innerHTML = userApplications.map(app => {
+      const internship = findInternshipById(app.internship_id);
+      if (!internship) return '';
+
+      const review = allRecords.find(r => 
+        r.type === 'review' && 
+        r.internship_id === app.internship_id && 
+        r.email === currentStudent.email
+      );
+
+      const appliedDate = new Date(app.applied_date);
+      const formattedDate = appliedDate.toLocaleDateString('en-IN', { 
+        day: 'numeric', 
+        month: 'short', 
+        year: 'numeric' 
+      });
+
+      return `
+        <div class="bg-white/95 rounded-xl shadow-lg p-6 border border-slate-200">
+          <div class="flex flex-col md:flex-row md:items-start md:justify-between gap-4">
+            <div class="flex-1">
+              <h3 class="font-bold text-lg text-slate-900 mb-1">${internship.title}</h3>
+              <p class="text-sm text-indigo-600 font-semibold mb-2">${internship.company}</p>
+              
+              <div class="flex flex-wrap gap-3 text-xs text-slate-600 mb-3">
+                <span>📅 Applied: ${formattedDate}</span>
+                <span>📍 ${internship.location}</span>
+                <span>💰 ${internship.stipend}</span>
+              </div>
+
+              <span class="badge bg-emerald-100 text-emerald-700">${app.status}</span>
+            </div>
+
+            <div class="flex flex-col gap-2">
+              ${review ? `
+                <button onclick="openReviewModal('${app.internship_id}', true)" class="px-4 py-2 bg-amber-100 text-amber-700 rounded-lg hover:bg-amber-200 transition text-sm font-semibold">
+                  Edit Review
+                </button>
+              ` : `
+                <button onclick="openReviewModal('${app.internship_id}', false)" class="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition text-sm font-semibold">
+                  Write Review
+                </button>
+              `}
+            </div>
+          </div>
+
+          ${review ? `
+            <div class="mt-4 pt-4 border-t border-slate-200">
+              <div class="flex items-center gap-2 mb-2">
+                <span class="text-sm font-semibold text-slate-700">Your Review:</span>
+                <div class="flex">
+                  ${[1,2,3,4,5].map(i => `<span class="text-amber-400">${i <= review.rating ? '★' : '☆'}</span>`).join('')}
+                </div>
+              </div>
+              <p class="text-sm text-slate-600 italic">"${review.review_text}"</p>
+              <p class="text-xs text-slate-500 mt-1">Reviewed on ${new Date(review.review_date).toLocaleDateString('en-IN')}</p>
+            </div>
+          ` : ''}
+        </div>
+      `;
+    }).join('');
+  }
+
+  // ============ REVIEW MODAL ============
+  function openReviewModal(internshipId, isEdit) {
+    const internship = findInternshipById(internshipId);
+    if (!internship) return;
+
+    const modal = document.getElementById('reviewModal');
+    const titleEl = document.getElementById('reviewModalTitle');
+    const nameEl = document.getElementById('reviewInternshipName');
+    const textEl = document.getElementById('reviewText');
+    const errorEl = document.getElementById('reviewError');
+
+    titleEl.textContent = isEdit ? 'Edit Your Review' : 'Rate Your Experience';
+    nameEl.textContent = internship.title + ' - ' + internship.company;
+    errorEl.textContent = '';
+
+    if (isEdit) {
+      const existingReview = allRecords.find(r => 
+        r.type === 'review' && 
+        r.internship_id === internshipId && 
+        r.email === currentStudent.email
+      );
+      
+      if (existingReview) {
+        selectedRating = existingReview.rating;
+        textEl.value = existingReview.review_text;
+        updateStarDisplay();
+        updateCharCount();
+        currentReviewData = existingReview;
+      }
+    } else {
+      selectedRating = 0;
+      textEl.value = '';
+      updateStarDisplay();
+      updateCharCount();
+      currentReviewData = { internship_id: internshipId, isNew: true };
+    }
+
+    modal.classList.remove('hidden');
+    modal.classList.add('flex');
+  }
+
+  function closeReviewModal() {
+    const modal = document.getElementById('reviewModal');
+    modal.classList.add('hidden');
+    modal.classList.remove('flex');
+    currentReviewData = null;
+    selectedRating = 0;
+  }
+
+  function setRating(rating) {
+    selectedRating = rating;
+    updateStarDisplay();
+  }
+
+  function updateStarDisplay() {
+    const stars = document.querySelectorAll('#starRating .star');
+    stars.forEach((star, index) => {
+      if (index < selectedRating) {
+        star.classList.add('filled');
+      } else {
+        star.classList.remove('filled');
+      }
+    });
+  }
+
+  function updateCharCount() {
+    const textEl = document.getElementById('reviewText');
+    const countEl = document.getElementById('reviewCharCount');
+    const length = textEl.value.length;
+    countEl.textContent = `${length}/20 characters`;
+    
+    if (length >= 20) {
+      countEl.classList.remove('text-slate-500');
+      countEl.classList.add('text-emerald-600');
+    } else {
+      countEl.classList.remove('text-emerald-600');
+      countEl.classList.add('text-slate-500');
+    }
+  }
+
+  async function submitReview() {
+    const textEl = document.getElementById('reviewText');
+    const errorEl = document.getElementById('reviewError');
+    const btn = document.getElementById('submitReviewBtn');
+
+    errorEl.textContent = '';
+
+    const reviewText = textEl.value.trim();
+
+    if (selectedRating === 0) {
+      errorEl.textContent = 'Please select a star rating.';
+      return;
+    }
+
+    if (reviewText.length < 20) {
+      errorEl.textContent = 'Review must be at least 20 characters long.';
+      return;
+    }
+
+    btn.disabled = true;
+    btn.innerHTML = '<div class="loading-spinner mx-auto"></div>';
+
+    if (currentReviewData.isNew) {
+      const reviewData = {
+        id: 'review-' + Date.now() + '-' + Math.random().toString(36).substr(2, 9),
+        type: 'review',
+        internship_id: currentReviewData.internship_id,
+        student_name: currentStudent.name,
+        college: currentStudent.college,
+        department: currentStudent.department,
+        email: currentStudent.email,
+        rating: selectedRating,
+        review_text: reviewText,
+        review_date: new Date().toISOString()
+      };
+
+      if (window.dataSdk) {
+        const result = await window.dataSdk.create(reviewData);
+        
+        if (result.isOk) {
+          closeReviewModal();
+          renderApplications();
+        } else {
+          errorEl.textContent = 'Failed to submit review. Please try again.';
+          btn.disabled = false;
+          btn.textContent = 'Submit Review';
         }
+      }
+    } else {
+      const updatedReview = {
+        ...currentReviewData,
+        rating: selectedRating,
+        review_text: reviewText,
+        review_date: new Date().toISOString()
+      };
 
-        // ---------------- SEARCH FUNCTION ----------------
-        function performSearch() {
-            let keyword = document.getElementById("searchInput").value;
-
-            if (keyword.trim() === "") {
-                alert("Please enter something to search.");
-                return;
-            }
-
-            alert("Searching for: " + keyword);
+      if (window.dataSdk) {
+        const result = await window.dataSdk.update(updatedReview);
+        
+        if (result.isOk) {
+          closeReviewModal();
+          renderApplications();
+        } else {
+          errorEl.textContent = 'Failed to update review. Please try again.';
+          btn.disabled = false;
+          btn.textContent = 'Submit Review';
         }
+      }
+    }
+  }
 
-        // ---------------- REGISTRATION VALIDATION ----------------
-        function validateRegistration() {
-            let valid = true;
+  // ============ HELPER FUNCTIONS ============
+  function findInternshipById(id) {
+    for (const dept in internshipDatabase) {
+      const found = internshipDatabase[dept].find(i => i.id === id);
+      if (found) return found;
+    }
+    return null;
+  }
 
-            document.getElementById("nameError").innerHTML = "";
-            document.getElementById("emailError").innerHTML = "";
-            document.getElementById("mobileError").innerHTML = "";
-            document.getElementById("passwordError").innerHTML = "";
+  function getDepartmentFullName(code) {
+    const names = {
+      'CSE': 'Computer Science & Engineering',
+      'ECE': 'Electronics & Communication Engineering',
+      'EEE': 'Electrical & Electronics Engineering',
+      'MECH': 'Mechanical Engineering',
+      'CIVIL': 'Civil Engineering',
+      'BIO-ENG': 'Bio Engineering',
+      'BIO-IT': 'Bio Informatics & IT',
+      'POLYTECHNIC': 'Polytechnic'
+    };
+    return names[code] || code;
+  }
+</script>
 
-            let name = document.getElementById("regName").value;
-            let email = document.getElementById("regEmail").value;
-            let mobile = document.getElementById("regMobile").value;
-            let password = document.getElementById("regPassword").value;
-
-            // Name validation
-            let nameRegex = /^[A-Za-z ]+$/;
-            if (!nameRegex.test(name)) {
-                document.getElementById("nameError").innerHTML = "Name should contain only alphabets.";
-                valid = false;
-            }
-
-            // Email validation
-            if (!email.includes("@") || !email.includes(".")) {
-                document.getElementById("emailError").innerHTML = "Enter a valid email.";
-                valid = false;
-            }
-
-            // Mobile validation
-            let mobileRegex = /^[0-9]{10}$/;
-            if (!mobileRegex.test(mobile)) {
-                document.getElementById("mobileError").innerHTML = "Mobile number must be exactly 10 digits.";
-                valid = false;
-            }
-
-            // Password validation
-            let passwordRegex = /^(?=.*[A-Za-z])(?=.*\d)(?=.*[@$!%*?&]).{6,}$/;
-            if (!passwordRegex.test(password)) {
-                document.getElementById("passwordError").innerHTML = 
-                    "Password must include letters, numbers & a special symbol.";
-                valid = false;
-            }
-
-            return valid;
-        }
-
-        // ---------------- LOGIN VALIDATION ----------------
-        function validateLogin() {
-            let email = document.getElementById("loginEmail").value;
-            let password = document.getElementById("loginPassword").value;
-
-            if (email === "" || password === "") {
-                alert("Email or Password cannot be empty.");
-                return false;
-            }
-            return true;
-        }
-    </script>
-
-</head>
-<body>
-
-<!-- Navigation Bar -->
-<nav>
-    <a onclick="showSection('search')" class="activeTab">Search</a>
-    <a onclick="showSection('register')">Registration</a>
-    <a onclick="showSection('login')">Login</a>
-</nav>
-
-<!-- SEARCH SECTION -->
-<div class="container section active" id="search">
-    <h2>Search Internships / Jobs</h2>
-    <input type="text" id="searchInput" placeholder="Search by skill, job, or keyword...">
-    <button onclick="performSearch()">Search</button>
-</div>
-
-<!-- REGISTRATION SECTION -->
-<div class="container section" id="register">
-
-    <h2>Registration Form</h2>
-
-    <form onsubmit="return validateRegistration()">
-
-        <label>Full Name</label>
-        <input type="text" id="regName" placeholder="Enter your name">
-        <div id="nameError" class="error"></div>
-
-        <label>Email</label>
-        <input type="email" id="regEmail" placeholder="Enter your email">
-        <div id="emailError" class="error"></div>
-
-        <label>Mobile Number</label>
-        <input type="text" id="regMobile" placeholder="Enter 10-digit mobile number">
-        <div id="mobileError" class="error"></div>
-
-        <label>Password</label>
-        <input type="password" id="regPassword" placeholder="Create strong password">
-        <small style="color: gray;">At least 6 characters, 1 number, 1 symbol</small>
-        <div id="passwordError" class="error"></div>
-
-        <button type="submit">Register</button>
-    </form>
-
-</div>
-
-<!-- LOGIN SECTION -->
-<div class="container section" id="login">
-
-    <h2>Login Page</h2>
-
-    <form onsubmit="return validateLogin()">
-        <input type="email" id="loginEmail" placeholder="Enter email">
-        <input type="password" id="loginPassword" placeholder="Enter password">
-
-        <button type="submit">Login</button>
-    </form>
-
-</div>
-
+<script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'9a6010b3e5cd919e',t:'MTc2NDM5NzkxOS4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script>
 </body>
 </html>
